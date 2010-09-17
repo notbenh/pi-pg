@@ -2,11 +2,9 @@
 use strict;
 use warnings;
 use YAML qw{LoadFile};
-use Util::Log;
 use Data::Manip qw{:all};
 
 my $data = LoadFile( shift @ARGV || './pi.yaml') or die;
-#die DUMP $data;
 
 my $drop = shift @ARGV || 0;
 
