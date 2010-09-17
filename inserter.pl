@@ -180,6 +180,7 @@ sub meta_value {
                    => meta_type_id => SEL(meta_type => id => meta_type => $type)
         ),
      $self->RINS( r_product_meta_data => 
+                  meta_type_id => SEL( meta_type => id => meta_type => $type),
                   meta_data_id => SEL( meta_data => id => meta_data => $value
                                                        => meta_type_id => SEL(meta_type => id => meta_type => $type)
                                      )

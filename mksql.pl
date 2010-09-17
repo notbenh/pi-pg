@@ -40,14 +40,14 @@ for my $table (keys %$data ) {
    my $rows = $data->{$table};
    my $collect = $table =~ m/^c_/;
    my $relate  = $table =~ m/^r_/;
-   if ($relate || $collect) { # || $collect) {
+   if ($relate || $collect) { 
       my $view = $table;
       $view =~ s/^[rc]_/v_/;
 
       my (@select, @join);
       my $indent = join( '', map{' '} 1..29);
       
-      for (@$rows) {
+      for (grep{ref($_) eq 'HASH'} @$rows) {
          my ($rr ) = join '_', %$_;
          my ($tbl) = keys %$_;
          push @select, ($tbl eq 'product') ? 'product.pid'
@@ -66,7 +66,7 @@ for my $table (keys %$data ) {
                              FROM $table
                              %s;
                             },
-                          join( ', ', qq{$table.id}, @select, ( $relate ) ? (qq{$table.timestamp}, qq{calc_trust($table.data_source_instance_id)}) : () ),
+                          join( ', ', qq{$table.id}, @select, ( $relate ) ? (qq{$table.timestamp}, qq{trust * calc_trust($table.data_source_instance_id) as trust}) : () ),
                           join( $indent, @join);
       ;
 

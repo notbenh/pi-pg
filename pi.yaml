@@ -79,15 +79,16 @@ r_product_list_price :
    - product : id
    - list_price : id
 meta_type :
-   - meta_type varchar(255) not null
+   - meta_type varchar(255) not null UNIQUE
 _eta_date : 
    - meta_date date not null 
    - meta_type : id
    - UNIQUE (meta_date, meta_type_id)
 r_product_meta_date :
    - product : id
+   - meta_type : id
    - meta_date : id
-   #- meta_type : id
+   - UNIQUE (product_id, meta_date_id, meta_type_id, data_source_instance_id)
 r_c_blurb_meta_date :
    - c_blurb : id
    - meta_date : id
@@ -97,8 +98,9 @@ meta_data :
    - UNIQUE (meta_data, meta_type_id)
 r_product_meta_data :
    - product : id
+   - meta_type : id
    - meta_data : id
-   #- meta_type : id
+   - UNIQUE (product_id, meta_data_id, meta_type_id, data_source_instance_id)
 r_c_blurb_meta_data :
    - c_blurb : id
    - meta_data : id
@@ -116,3 +118,8 @@ person :
 #   - person : id
 #   - person_name : id
 #   - person_name_type: id
+subject :
+   - subject varchar(255) not null UNIQUE
+r_product_subject :
+   - product : id
+   - subject : id
