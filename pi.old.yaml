@@ -1,0 +1,732 @@
+---
+- trust_log :
+   col :
+      - table_name : VARCHAR(100) NOT NULL DEFAULT ''
+      - table_id : int(10) unsigned NOT NULL 
+      - from : INT UNSIGNED NOT NULL
+      - to : INT UNSIGNED NOT NULL
+      - note : VARCHAR(100)
+      - source_id : INT UNSIGNED NOT NULL
+      - source_instance_id : INT UNSIGNED NOT NULL
+      - timestamp : timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
+- data_source_type :
+   col :
+      - data_source_type : VARCHAR(50) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - data_source_type
+- data_source :
+   col :
+      - name : VARCHAR(100) NOT NULL DEFAULT ''
+      - data_source_type_id : INT UNSIGNED NOT NULL FK{data_source_type.id}
+      - trust : TINYINT UNSIGNED NOT NULL DEFAULT 10
+   UNIQUE :
+      - name, data_source_type_id
+- v_data_source :
+   select : |
+      SELECT DS.id, DS.name, DST.data_source_type, DS.trust
+      FROM data_source DS
+      JOIN data_source_type DST ON (DS.data_source_type_id = DST.id)
+   TEMPLATE : view
+- data_source_instance :
+   col :
+      - data_source_id : INT UNSIGNED NOT NULL FK{data_source.id}
+      - instance_name : VARCHAR(255) NOT NULL DEFAULT ''
+      - trust : TINYINT UNSIGNED NOT NULL DEFAULT 10
+      - timestamp : timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
+   UNIQUE : 
+      - instance_name, data_source_id 
+# !!!{BUG}!!! if you change src_name to data_source_name then things fail, still not sure why.
+- v_data_source_instance :
+   select : |
+      SELECT DSI.id, VDS.name AS src_name, VDS.id AS src_id, DSI.instance_name, DSI.timestamp, (DSI.trust * VDS.trust) AS trust
+      FROM data_source_instance DSI
+      JOIN v_data_source VDS ON (DSI.data_source_id = VDS.id)
+   TEMPLATE : view
+- product :
+   col :
+      - pid : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE :
+      - pid
+- binding :
+   col : 
+      - binding : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - binding
+- r_product_binding :
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - binding_id : INT UNSIGNED NOT NULL FK{binding.id}
+   TEMPLATE : link_single
+   DISPLAY : binding
+- binding_display :
+   col : 
+      - binding_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - binding_display
+- r_binding_binding_display :
+   col : 
+      - binding_id : INT UNSIGNED NOT NULL FK{binding.id}
+      - binding_display_id : INT UNSIGNED NOT NULL FK{binding_display.id}
+   TEMPLATE : link
+- blurb : 
+   col :
+      - blurb_text_id : INT UNSIGNED NOT NULL FK{blurb_text.id}
+      - blurb_type_id : INT UNSIGNED NOT NULL FK{blurb_type.id}
+      - attribution_id : INT UNSIGNED FK{data_source.id}
+      - person_id : INT UNSIGNED DEFAULT NULL FK{person.id}
+   UNIQUE :
+      - blurb_text_id, attribution_id, person_id 
+- blurb_text : 
+   col :
+      - blurb_text : LONGTEXT NOT NULL
+      - blurb_key : text(32)
+   UNIQUE :
+      - blurb_key(32)
+- blurb_type :
+   col :
+      - blurb_type : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE :
+      - blurb_type
+- blurb_type_display :
+   col :
+      - blurb_type_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE :
+      - blurb_type_display
+- r_blurb_type_blurb_type_display :
+   col : 
+      - blurb_type_id : INT UNSIGNED NOT NULL FK{blurb_type.id}
+      - blurb_type_display_id : INT UNSIGNED NOT NULL FK{blurb_type_display.id}
+   TEMPLATE : link
+- r_product_blurb : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - blurb_id : INT UNSIGNED NOT NULL FK{blurb.id}
+   TEMPLATE : link_multi
+- copyright :
+   col :
+      - copyright_date : YEAR(4) NOT NULL
+   UNIQUE : 
+      - copyright_date
+- r_product_copyright : 
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - copyright_date_id : INT UNSIGNED NOT NULL FK{copyright.id}
+   TEMPLATE : link_single
+- language :
+   col : 
+      - language : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE :
+      - language
+- language_display :
+   col : 
+      - language_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE :
+      - language_display
+- r_language_language_display :
+   col : 
+      - language_id : INT UNSIGNED NOT NULL FK{language.id}
+      - language_display_id : INT UNSIGNED NOT NULL FK{language_display.id}
+   TEMPLATE : link
+- r_product_language :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - language_id : INT UNSIGNED NOT NULL FK{language.id}
+   TEMPLATE : link_single
+   DISPLAY : language
+- list_price :
+   col :
+      - list_price : DECIMAL(9,2) NOT NULL
+      - currency_id : INT UNSIGNED NOT NULL FK{currency.id}
+   UNIQUE :
+      - list_price,currency_id
+- currency :
+   col :
+      - currency : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - currency
+- currency_display :
+   col :
+      - currency_display : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - currency_display
+- r_currency_currency_display :
+   col :
+      - currency_id : INT UNSIGNED NOT NULL FK{currency.id}
+      - currency_display_id : INT UNSIGNED NOT NULL FK{currency_display.id}
+   TEMPLATE : link
+- r_product_list_price :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - list_price_id : INT UNSIGNED NOT NULL FK{list_price.id}
+   TEMPLATE : link_single
+- meta_type :
+   col:
+      - meta_type : VARCHAR(150) NOT NULL DEFAULT ''
+- meta_date :
+   col:
+      - meta_date : DATE DEFAULT NULL
+      - meta_type_id : INT UNSIGNED NOT NULL FK{meta_type.id}
+   UNIQUE :
+      - meta_date, meta_type_id
+#this links meta to a blurb (think notes or other descriptions of the meta data)
+- r_blurb_meta_date :
+   col : 
+      - blurb_id : INT UNSIGNED NOT NULL FK{blurb.id}
+      - meta_date_id : INT UNSIGNED NOT NULL FK{meta_generic.id}
+   TEMPLATE : link_multi
+- r_product_meta_date :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - meta_date_id : INT UNSIGNED NOT NULL FK{meta_date.id}
+   TEMPLATE : link_multi
+- meta_generic :
+   col:
+      - meta_value : VARCHAR(100) NOT NULL DEFAULT ''
+      - meta_type_id : INT UNSIGNED NOT NULL FK{meta_type.id}
+   UNIQUE :
+      - meta_value, meta_type_id
+- r_product_meta_generic :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - meta_generic_id : INT UNSIGNED NOT NULL FK{meta_generic.id}
+   TEMPLATE : link_multi
+#this links meta to a blurb (think notes or other descriptions of the meta data or blurb order)
+- r_blurb_meta_generic :
+   col :
+      - blurb_id : INT UNSIGNED NOT NULL FK{blurb.id}
+      - meta_generic_id : INT UNSIGNED NOT NULL FK{meta_generic.id}
+   TEMPLATE : link_multi
+# Person (for now) is just an id without a value that we link back to, this allows us to 
+# build the idea of a 'person' that is not tied to their name.
+- person : 
+- person_name :
+   col :
+      - title : VARCHAR(25) NOT NULL DEFAULT ''
+      - first_name : VARCHAR(100) NOT NULL DEFAULT ''
+      - last_name : VARCHAR(100) NOT NULL DEFAULT ''
+      - suffix : VARCHAR(25) NOT NULL DEFAULT ''
+      - name_key : VARCHAR(255) NOT NULL DEFAULT ''
+   UNIQUE:
+      - last_name, title, first_name, suffix
+      - name_key
+- r_person_person_name :
+   col : 
+      - person_id : INT UNSIGNED NOT NULL FK{person.id}
+      - name_id : INT UNSIGNED NOT NULL FK{person_name.id}
+      - name_type_id : INT UNSIGNED NOT NULL FK{person_name_type.id}
+   UNIQUE:
+      - person_id, name_id, name_type_id
+- person_name_type :
+   col :
+      - type : VARCHAR(50) NOT NULL DEFAULT ''
+   UNIQUE:
+      - type
+- person_role :
+   col :
+      - role : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - role
+- person_role_display :
+   col :
+      - role_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - role_display
+- r_role_role_display :
+   col :
+      - role_id : INT UNSIGNED NOT NULL FK{role.id}
+      - role_display_id : INT UNSIGNED NOT NULL FK{role_display.id}
+   TEMPLATE : link
+- r_product_person_role :
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - person_id : INT UNSIGNED NOT NULL FK{person.id}
+      - name_id : INT UNSIGNED NOT NULL FK{person_name.id}
+      - role_id : INT UNSIGNED NOT NULL FK{person_role.id}
+      - sequencenumber : INT UNSIGNED DEFAULT NULL
+   TEMPLATE : link_single
+- publication_date :
+   col : 
+      - publication_date : DATE NOT NULL
+   UNIQUE :
+      - publication_date
+- r_product_publication_date :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - publication_date_id : INT UNSIGNED NOT NULL FK{publication_date.id}
+   TEMPLATE : link_single
+# after talking with Jill about how pubs and imprints map I've come up with the following 'rules'
+# - only publishers have imprints (ie an imprint can not have an imprint)
+# - it is irrelviant to account for any imprint/pub 'moving' as we are tracking historical data
+# - we need to capture any 'improper' data that comes in (pub as imprint, imprint as pub)
+# - because these are 1<->1 relations it might make sense to have these laid out like tags (words) -> pub : imprint
+#
+- publisher :
+   col :
+      - publisher : VARCHAR(150) NOT NULL DEFAULT ''
+   UNIQUE :
+      - publisher
+- r_product_publisher :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - publisher_id : INT UNSIGNED NOT NULL FK{publisher.id}
+   TEMPLATE : link_single
+- r_publisher_publisher :
+   col :
+      - from_publisher_id : INT UNSIGNED NOT NULL FK{publisher.id}
+      - to_publisher_id : INT UNSIGNED NOT NULL FK{publisher.id}
+      - relation_type_id : INT UNSIGNED NOT NULL FK{publisher_relation_type.id}
+   UNIQUE :
+      - from_publisher_id, to_publisher_id, relation_type_id
+- r_product_publisher_publisher :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - r_publisher_publisher_id : INT UNSIGNED NOT NULL FK{r_publisher_publisher.id}
+   TEMPLATE : link_single
+- publisher_relation_type :
+   col : 
+      - relation_type : VARCHAR(100) NOT NULL DEFAULT ''
+- publisher_address :
+   col :
+      - publisher_address : VARCHAR(255) NOT NULL DEFAULT ''
+   UNIQUE :
+      - publisher_address
+- r_publisher_publisher_address :
+   col: 
+      - publisher_id : INT UNSIGNED NOT NULL FK{publisher.id}
+      - publisher_address_id : INT UNSIGNED NOT NULL FK{publisher_address.id}
+- subject :
+   col : 
+      - subject : VARCHAR(255) NOT NULL
+   UNIQUE :
+      - subject
+- subject_display :
+   col : 
+      - subject_display : VARCHAR(255) NOT NULL
+   UNIQUE :
+      - subject_display
+- r_subject_subject_display :
+   col :
+      - subject_id : INT UNSIGNED NOT NULL FK{subject.id}
+      - subject_display_id : INT UNSIGNED NOT NULL FK{subject_display.id}
+   TEMPLATE : link
+- r_product_subject :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - subject_id : INT UNSIGNED NOT NULL FK{subject.id}
+   TEMPLATE : link_multi(trust > 2000)
+   DISPLAY : subject
+- title :
+   col :
+      - title : VARCHAR(255) NOT NULL DEFAULT ''
+      - subtitle : VARCHAR(255) NOT NULL DEFAULT ''
+      - title_key : VARCHAR(255) NOT NULL DEFAULT ''
+   UNIQUE :
+      - title(255), subtitle(255)
+      - title_key(255)
+- r_product_title :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - title_id : INT UNSIGNED NOT NULL FK{title.id}
+   TEMPLATE : link_single
+- country_of_publication :
+   col :
+      - country_of_publication : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE :
+      - country_of_publication
+- country_of_publication_display :
+   col :
+      - country_of_publication_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE :
+      - country_of_publication_display
+- r_country_of_publication_country_of_publication_display :
+   col :
+      - country_of_publication_id : INT UNSIGNED NOT NULL FK{country_of_publication.id}
+      - country_of_publication_display_id : INT UNSIGNED NOT NULL FK{country_of_publication_display.id}
+   TEMPLATE : link
+- r_product_country_of_publication :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - country_of_publication_id : INT UNSIGNED NOT NULL FK{country_of_publication.id}
+   TEMPLATE : link_single
+   DISPLAY : country_of_publication
+- dimension_unit :
+   col :
+      - dimension_unit : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - dimension_unit
+- dimension_type :
+   col :
+      - dimension_type : VARCHAR(30) NOT NULL
+   UNIQUE : 
+      - dimension_type
+- dimension :
+   col :
+      # THIS REALLY SHOULD BE FLOAT BUT IT ~MIGHT~ BE CAUSING MATCHING ISSUES...
+      #- dimension : FLOAT(7,3) UNSIGNED NOT NULL 
+      #THIS WORKS CLEANLY FOR INSERT, BUT CRIPPLES THE USEFULNESS OF THE DATA (cant order strings)
+      - dimension : VARCHAR(10) NOT NULL  
+      - dimension_type_id : INT UNSIGNED NOT NULL FK{dimension_type.id}
+      - dimension_unit_id : INT UNSIGNED NOT NULL FK{dimension_unit.id}
+   UNIQUE : 
+      - dimension, dimension_type_id, dimension_unit_id
+- r_product_dimension :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - dimension_id : INT UNSIGNED NOT NULL FK{dimension.id}
+   TEMPLATE : link_multi
+- media_type :
+   col :
+      - type : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : type
+- media_type_display :
+   col :
+      - type_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : type_display
+- r_media_type_media_type_display :
+   col :
+      - media_type_id : INT UNSIGNED NOT NULL FK{media_type.id}
+      - media_type_display_id : INT UNSIGNED NOT NULL FK{media_type_display.id}
+   TEMPLATE : link
+- media : 
+   col :
+      - blurb_text_id : INT UNSIGNED NOT NULL FK{blurb_text.id}
+      - media_type_id : INT UNSIGNED NOT NULL FK{media_type.id}
+   UNIQUE : blurb_text_id, media_type_id
+- r_product_media :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - media_id : INT UNSIGNED NOT NULL FK{media.id}
+   TEMPLATE : link_multi
+- pages : 
+   col : 
+      - pages : INT UNSIGNED NOT NULL
+   UNIQUE : pages
+- r_product_pages : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - pages_id : INT UNSIGNED NOT NULL FK{pages.id}
+   TEMPLATE : link_single(trust > 2000)
+- grade_range : 
+   col : 
+      - grade_range : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : grade_range
+- grade_range_display : 
+   col : 
+      - grade_range_display : VARCHAR(100) NOT NULL DEFAULT ''
+      - display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : grade_range_display
+- r_grade_range_grade_range_display :
+   col :
+      - grade_range_id : INT UNSIGNED NOT NULL FK{grade_range.id}
+      - grade_range_display_id : INT UNSIGNED NOT NULL FK{grade_range_display.id}
+   TEMPLATE : link
+- r_product_grade_range : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - grade_range_id : INT UNSIGNED NOT NULL FK{grade_range.id}
+   TEMPLATE : link_multi
+   DISPLAY : grade_range
+- prize_code : 
+   col : 
+      - prize_code : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : prize_code
+- prize_code_display : 
+   col : 
+      - prize_code_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : prize_code_display
+- r_prize_code_prize_code_display :
+   col :
+      - prize_code_id : INT UNSIGNED NOT NULL FK{prize_code.id}
+      - prize_code_display_id : INT UNSIGNED NOT NULL FK{prize_code_display.id}
+   TEMPLATE : link
+- r_product_prize_code : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - prize_code_id : INT UNSIGNED NOT NULL FK{prize_code.id}
+   TEMPLATE : link_multi
+   DISPLAY : prize_code
+- interest_age : 
+   col : 
+      - interest_age : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : interest_age
+- interest_age_display : 
+   col : 
+      - interest_age_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : interest_age_display
+- r_interest_age_interest_age_display :
+   col :
+      - interest_age_id : INT UNSIGNED NOT NULL FK{interest_age.id}
+      - interest_age_display_id : INT UNSIGNED NOT NULL FK{interest_age_display.id}
+   TEMPLATE : link
+- r_product_interest_age : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - interest_age_id : INT UNSIGNED NOT NULL FK{interest_age.id}
+   TEMPLATE : link_multi
+   DISPLAY : interest_age
+- series :
+   col : 
+      - series : VARCHAR(200) NOT NULL DEFAULT ''
+   UNIQUE : series
+- series_display :
+   col : 
+      - series_display : VARCHAR(200) NOT NULL DEFAULT ''
+   UNIQUE : series_display
+- r_series_series_display :
+   col :
+      - series_id : INT UNSIGNED NOT NULL FK{series.id}
+      - series_display_id : INT UNSIGNED NOT NULL FK{series_display.id}
+   TEMPLATE : link
+- r_series_blurb :
+   col : 
+      - series_id : INT UNSIGNED NOT NULL FK{series.id}
+      - blurb_id : INT UNSIGNED NOT NULL FK{blurb.id}
+#   TEMPLATE : link_single
+- r_product_series : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - series_id : INT UNSIGNED NOT NULL FK{series.id}
+   TEMPLATE : link_single
+   DISPLAY : series
+- series_number : 
+   col :
+      - series_number : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE : series_number
+- series_number_display : 
+   col :
+      - series_number_display : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE : series_number_display
+- r_series_number_series_number_display :
+   col :
+      - series_number_id : INT UNSIGNED NOT NULL FK{series_number.id}
+      - series_number_display_id : INT UNSIGNED NOT NULL FK{series_number_display.id}
+   TEMPLATE : link
+- r_product_series_number : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - series_number_id : INT UNSIGNED NOT NULL FK{series_number.id}
+   TEMPLATE : link_single
+   DISPLAY : series_number
+- edition :
+   col : 
+      - edition : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : edition
+- edition_display :
+   col : 
+      - edition_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : edition_display
+- r_edition_edition_display :
+   col :
+      - edition_id : INT UNSIGNED NOT NULL FK{edition.id}
+      - edition_display_id : INT UNSIGNED NOT NULL FK{edition_display.id}
+   TEMPLATE : link
+- r_product_edition : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - edition_id : INT UNSIGNED NOT NULL FK{edition.id}
+   TEMPLATE : link_multi
+   DISPLAY: edition
+- edition_description :
+   col : 
+      - edition_description : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : edition_description
+- edition_description_display :
+   col : 
+      - edition_description_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : edition_description_display
+- r_edition_description_edition_description_display :
+   col :
+      - edition_description_id : INT UNSIGNED NOT NULL FK{edition_description.id}
+      - edition_description_display_id : INT UNSIGNED NOT NULL FK{edition_description_display.id}
+   TEMPLATE : link
+- r_product_edition_description : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - edition_description_id : INT UNSIGNED NOT NULL FK{edition_description.id}
+   TEMPLATE : link_multi
+   DISPLAY : edition_description
+- r_edition_blurb :
+   col : 
+      - edition_id : INT UNSIGNED NOT NULL FK{edition.id}
+      - blurb_id : INT UNSIGNED NOT NULL FK{blurb.id}
+#   TEMPLATE : link_single
+- edition_number :
+   col : 
+      - edition_number : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : edition_number
+- edition_number_display :
+   col : 
+      - edition_number_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : edition_number_display
+- r_edition_number_edition_number_display :
+   col :
+      - edition_number_id : INT UNSIGNED NOT NULL FK{edition_number.id}
+      - edition_number_display_id : INT UNSIGNED NOT NULL FK{edition_number_display.id}
+   TEMPLATE : link
+- r_product_edition_number : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - edition_number_id : INT UNSIGNED NOT NULL FK{edition_number.id}
+   TEMPLATE : link_single
+   DISPLAY: edition_number
+- v_people :
+   select : |
+      SELECT 
+       RPPN.person_id AS id,
+       PN.title,
+       PN.first_name,
+       PN.last_name, 
+       PN.suffix,
+       PN.name_key,
+       PNT.type
+      FROM r_person_person_name RPPN
+      JOIN person_name PN ON (RPPN.name_id = PN.id)
+      JOIN person_name_type PNT ON (RPPN.name_type_id = PNT.id)
+   TEMPLATE : view
+- v_best_product :
+   select : |
+      SELECT 
+        PID.id as id,
+        PID.pid,
+        B.binding,
+        B.display AS binding_display,
+        C.copyright_date,
+        CP.country_of_publication,
+        CP.display AS country_of_publication_display,
+        L.language,
+        L.display AS language_display,
+        LP.list_price,
+        CU.currency,
+        IFNULL(CUD.currency_display, CU.currency) AS currency_display,
+        PD.publication_date,
+        P.publisher,
+        T.title,
+        T.subtitle,
+        T.title_key,
+        GR.grade_range,
+        GR.display as grade_range_display,
+        IA.interest_age,
+        IA.display as interest_age_display,
+        PP.pages,
+        PC.prize_code,
+        PC.display as prize_code_display,
+        SUB.subject,
+        SUB.display AS subject_display
+      FROM product PID
+      LEFT JOIN v_best_product_binding B ON (PID.pid = B.pid)
+      LEFT JOIN v_best_product_copyright C ON (PID.pid = C.pid)
+      LEFT JOIN v_best_product_country_of_publication CP ON (PID.pid = CP.pid)
+      LEFT JOIN v_best_product_language L ON (PID.pid = L.pid)
+      LEFT JOIN v_best_product_list_price LP ON (PID.pid = LP.pid)
+      LEFT JOIN currency CU ON (LP.currency_id = CU.id)
+      LEFT JOIN r_currency_currency_display RCUCUD ON (RCUCUD.currency_id = CU.id)
+      LEFT JOIN currency_display CUD ON (RCUCUD.currency_display_id = CUD.id)
+      LEFT JOIN v_best_product_publication_date PD ON (PID.pid = PD.pid)
+      LEFT JOIN v_best_product_publisher P ON (PID.pid = P.pid)
+      LEFT JOIN v_best_product_title T ON (PID.pid = T.pid)   
+      LEFT JOIN v_best_product_grade_range GR ON (PID.pid = GR.pid)
+      LEFT JOIN v_best_product_interest_age IA ON (PID.pid = IA.pid)
+      LEFT JOIN v_best_product_pages PP ON (PID.pid = PP.pid)
+      LEFT JOIN v_best_product_prize_code PC ON (PID.pid = PC.pid)
+      LEFT JOIN v_best_product_subject SUB ON (PID.pid = SUB.pid)
+   TEMPLATE : view
+- product_relation_type : 
+   col :
+      - relation_type : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - relation_type
+- product_relation_type_display : 
+   col :
+      - relation_type_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - relation_type_display
+- r_product_relation_type_product_relation_type_display :
+   col :
+      - product_relation_type_id : INT UNSIGNED NOT NULL FK{product_relation_type.id}
+      - product_relation_type_display_id : INT UNSIGNED NOT NULL FK{product_relation_type_display.id}
+   TEMPLATE : link
+- r_product_product : 
+   col :
+      - from_product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - to_product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - relation_type_id : INT UNSIGNED NOT NULL FK{product_relation_type.id}
+   UNIQUE : 
+      - from_product_id, to_product_id, relation_type_id
+- number_of_pieces :
+   col : 
+      - number_of_pieces : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE : number_of_pieces
+- number_of_pieces_display :
+   col : 
+      - number_of_pieces_display : VARCHAR(20) NOT NULL DEFAULT ''
+   UNIQUE : number_of_pieces_display
+- r_number_of_pieces_number_of_pieces_display :
+   col :
+      - number_of_pieces_id : INT UNSIGNED NOT NULL FK{number_of_pieces.id}
+      - number_of_pieces_display_id : INT UNSIGNED NOT NULL FK{number_of_pieces_display.id}
+   TEMPLATE : link
+- r_product_number_of_pieces : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - number_of_pieces_id : INT UNSIGNED NOT NULL FK{number_of_pieces.id}
+   TEMPLATE : link_single
+   DISPLAY : number_of_pieces
+- keyword : 
+   col :
+      - keyword : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - keyword
+- keyword_display : 
+   col :
+      - keyword_display : VARCHAR(100) NOT NULL DEFAULT ''
+   UNIQUE : 
+      - keyword_display
+- r_keyword_keyword_display :
+   col :
+      - keyword_id : INT UNSIGNED NOT NULL FK{keyword.id}
+      - keyword_display_id : INT UNSIGNED NOT NULL FK{keyword_display.id}
+   TEMPLATE : link
+- r_product_keyword :
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - keyword_id : INT UNSIGNED NOT NULL FK{keyword.id}
+   TEMPLATE : link_multi(trust > 2000)
+   DISPLAY : keyword
+
+# MBS Specific tables:
+- buying_guide_price :
+   col :
+      - buying_guide_price : DECIMAL(9,2) NOT NULL
+      - currency_id : INT UNSIGNED NOT NULL FK{currency.id}
+   UNIQUE :
+      - buying_guide_price,currency_id
+- r_product_buying_guide_price :
+   col :
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - buying_guide_price_id : INT UNSIGNED NOT NULL FK{buying_guide_price.id}
+   TEMPLATE : link_single
+- mbs_edition_status :
+   col : 
+      - mbs_edition_status : VARCHAR(255) NOT NULL
+   UNIQUE : mbs_edition_status
+- mbs_edition_status_display :
+   col : 
+      - mbs_edition_status_display : VARCHAR(255) NOT NULL
+   UNIQUE : mbs_edition_status_display
+- r_mbs_edition_status_mbs_edition_status_display :
+   col :
+      - mbs_edition_status_id : INT UNSIGNED NOT NULL FK{mbs_edition_status.id}
+      - mbs_edition_status_display_id : INT UNSIGNED NOT NULL FK{mbs_edition_status_display.id}
+   TEMPLATE : link
+- r_product_mbs_edition_status : 
+   col : 
+      - product_id : INT UNSIGNED NOT NULL FK{product.id}
+      - mbs_edition_status_id : INT UNSIGNED NOT NULL FK{mbs_edition_status.id}
+   TEMPLATE : link_single
+   DISPLAY : mbs_edition_status
+- config_best : 
+   col : 
+      - output_name : VARCHAR(100) NOT NULL
+      - input_name : VARCHAR(100) NOT NULL
+      - best_type : VARCHAR(100) NOT NULL DEFAULT 'trust, timestamp'
+      - select_sql : TEXT

@@ -1,0 +1,2 @@
+#!/bin/bash
+./go 2>&1| ack -v NOTICE | ack -vi DROP  | ack -v DETAIL | less

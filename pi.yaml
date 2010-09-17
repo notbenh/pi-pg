@@ -1,0 +1,116 @@
+---
+data_source_type :
+   - data_source_type varchar(50) not null UNIQUE
+   - trust smallint CHECK( 100 >= trust AND trust >= 0 )  DEFAULT 10
+data_source :
+   - data_source varchar(100) not null
+   - trust smallint CHECK( 100 >= trust AND trust >= 0 )  DEFAULT 10
+   - data_source_type: id
+   - UNIQUE (data_source, data_source_type_id) 
+data_source_instance :
+   - data_source_instance varchar(255) NOT NULL
+   - data_source : id
+   - trust smallint CHECK( 100 >= trust AND trust >= 0 )  DEFAULT 10
+   - timestamp timestamp with time zone not null DEFAULT current_timestamp
+   - UNIQUE (data_source_instance, data_source_id)
+product:
+   - pid varchar(30) not null UNIQUE
+title : 
+   - title text not null
+   - subtitle text DEFAULT null
+   - title_key VARCHAR(100) not null
+r_product_title :
+   - product : id
+   - title : id
+binding :
+   - binding varchar(255) NOT NULL UNIQUE
+r_product_binding :
+   - product : id
+   - binding : id
+binding_display :
+   - binding_display varchar(255) not null UNIQUE
+r_binding_binding_display: 
+   - binding : id
+   - binding_display : id
+blurb_text :
+   - blurb_text text not null 
+   - blurb_key VARCHAR(50) UNIQUE
+blurb_type_display:
+   - blurb_type_display varchar(255) not null UNIQUE
+blurb_type :
+   - blurb_type varchar(255) NOT NULL UNIQUE
+r_blurb_type_blurb_type_display:
+   - blurb_type : id
+   - blurb_type_display : id
+c_blurb :
+   - blurb_text : id
+   - blurb_type : id
+   - data_source : id
+   - person : id
+r_product_c_blurb :
+   - product : id
+   - c_blurb : id
+copyright :
+   - copyright date not null UNIQUE
+r_product_copyright :
+   - product : id
+   - copyright : id
+language :
+   - language varchar(255) NOT NULL UNIQUE
+language_display :
+   - language_display VARCHAR(255) NOT NULL UNIQUE
+r_language_language_display:
+   - language : id
+   - language_display : id
+r_product_language :
+   - product : id
+   - language : id
+currency : 
+   - currency varchar(20) NOT NULL UNIQUE
+currency_display :
+   - currency_display varchar(20) NOT NULL UNIQUE
+r_currency_currency_display :
+   - currency : id
+   - currency_display : id
+list_price :
+   - list_price money not null UNIQUE
+   - currency : id
+r_product_list_price :
+   - product : id
+   - list_price : id
+meta_type :
+   - meta_type varchar(255) not null
+meta_date : 
+   - meta_date date not null 
+   - meta_type : id
+   - UNIQUE (meta_date, meta_type_id)
+r_product_meta_date :
+   - product : id
+   - meta_date : id
+r_c_blurb_meta_date :
+   - c_blurb : id
+   - meta_date : id
+meta_data :
+   - meta_data text not null 
+   - meta_type : id
+   - UNIQUE (meta_data, meta_type_id)
+r_product_meta_data :
+   - product : id
+   - meta_data : id
+r_c_blurb_meta_data :
+   - c_blurb : id
+   - meta_data : id
+person : 
+#person_name :
+#   - title varchar(25) not null
+#   - first_name varchar(100) not null
+#   - last_name varchar(100) not null
+#   - suffix varchar(25) not null
+#   - name_key varchar(255) not null UNIQUE
+#   - UNIQUE (last_name, title, first_name, suffix)
+#person_name_type :
+#   - type varchar(255) not null UNIQUE
+#r_person_person_name_person_name_type :
+#   - person : id
+#   - person_name : id
+#   - person_name_type: id
