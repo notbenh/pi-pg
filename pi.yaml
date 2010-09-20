@@ -1,4 +1,10 @@
 ---
+config_best :
+   - view VARCHAR(255) NOT NULL UNIQUE
+   - type VARCHAR(255)
+   - custom_group text
+   - custom_order text
+   - custom_limit integer
 data_source_type :
    - data_source_type varchar(50) not null UNIQUE
    - trust smallint CHECK( 100 >= trust AND trust >= 0 )  DEFAULT 10
@@ -19,17 +25,17 @@ title :
    - title text not null
    - subtitle text DEFAULT null
    - title_key VARCHAR(100) not null UNIQUE
-r_product_title :
+r_product_title : !perl/single
    - product : id
    - title : id
 binding :
    - binding varchar(255) NOT NULL UNIQUE
-r_product_binding :
+r_product_binding : !perl/single
    - product : id
    - binding : id
 binding_display :
    - binding_display varchar(255) not null UNIQUE
-r_binding_binding_display: 
+r_binding_binding_display:  !perl/Display
    - binding : id
    - binding_display : id
 blurb_text :
@@ -39,69 +45,69 @@ blurb_type_display:
    - blurb_type_display varchar(255) not null UNIQUE
 blurb_type :
    - blurb_type varchar(255) NOT NULL UNIQUE
-r_blurb_type_blurb_type_display:
+r_blurb_type_blurb_type_display: !perl/Display
    - blurb_type : id
    - blurb_type_display : id
-c_blurb :
+c_blurb : !perl/collection
    - blurb_text : id
    - blurb_type : id
    - data_source : id
    - person : id
-r_product_c_blurb :
+r_product_c_blurb : !perl/multi::custom_limit::10
    - product : id
    - c_blurb : id
 copyright :
    - copyright date not null UNIQUE
-r_product_copyright :
+r_product_copyright : !perl/single
    - product : id
    - copyright : id
 language :
    - language varchar(255) NOT NULL UNIQUE
 language_display :
    - language_display VARCHAR(255) NOT NULL UNIQUE
-r_language_language_display:
+r_language_language_display: !perl/single
    - language : id
    - language_display : id
-r_product_language :
+r_product_language : !perl/single
    - product : id
    - language : id
 currency : 
    - currency varchar(20) NOT NULL UNIQUE
 currency_display :
    - currency_display varchar(20) NOT NULL UNIQUE
-r_currency_currency_display :
+r_currency_currency_display : !perl/Display
    - currency : id
    - currency_display : id
 list_price :
    - list_price money not null UNIQUE
    - currency : id
-r_product_list_price :
+r_product_list_price : !perl/single
    - product : id
    - list_price : id
 meta_type :
    - meta_type varchar(255) not null UNIQUE
-_eta_date : 
+meta_date : 
    - meta_date date not null 
    - meta_type : id
    - UNIQUE (meta_date, meta_type_id)
-r_product_meta_date :
+r_product_meta_date : !perl/multi
    - product : id
    - meta_type : id
    - meta_date : id
    - UNIQUE (product_id, meta_date_id, meta_type_id, data_source_instance_id)
-r_c_blurb_meta_date :
+r_c_blurb_meta_date : !perl/multi
    - c_blurb : id
    - meta_date : id
 meta_data :
    - meta_data text not null 
    - meta_type : id
    - UNIQUE (meta_data, meta_type_id)
-r_product_meta_data :
+r_product_meta_data : !perl/multi
    - product : id
    - meta_type : id
    - meta_data : id
    - UNIQUE (product_id, meta_data_id, meta_type_id, data_source_instance_id)
-r_c_blurb_meta_data :
+r_c_blurb_meta_data : !perl/multi
    - c_blurb : id
    - meta_data : id
 person : 
@@ -120,6 +126,16 @@ person :
 #   - person_name_type: id
 subject :
    - subject varchar(255) not null UNIQUE
-r_product_subject :
+r_product_subject : !perl/multi
    - product : id
    - subject : id
+publisher :
+   - publisher varchar(255) not null UNIQUE
+r_product_publisher : !perl/single
+   - product : id
+   - publisher : id
+pages : 
+   - pages int not null UNIQUE
+r_product_pages : !perl/single
+   - product : id
+   - pages : id
